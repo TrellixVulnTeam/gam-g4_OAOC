@@ -36,3 +36,5 @@ setup_test.py
 gam_g4/gam_lib/GamDoseActor_save_random_hit_cpp
 
 gam_g4/gam_lib/termcolor.hpp
+
+gam_g4.egg-info.save
