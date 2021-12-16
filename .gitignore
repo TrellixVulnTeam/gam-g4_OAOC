@@ -15,6 +15,9 @@
 /geant4-multithreading-build/
 /geant4-multithreading/
 /geant4.10.06-debug
+/geant4.11.0.0_osx
+/geant4.11.0.0_linux
+/geant4
         
 /gam_g4/__pycache__
 /gam_g4/geant4_data/
