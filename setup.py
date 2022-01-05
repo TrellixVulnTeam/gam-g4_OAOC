@@ -4,6 +4,16 @@ import sys
 import platform
 import subprocess
 import glob
+import colored
+import json
+
+color_warning = colored.fg("orange_1")
+
+
+def warning(s):
+    s = colored.stylize(s, color_warning)
+    print(s)
+
 
 from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
@@ -78,8 +88,42 @@ class CMakeBuild(build_ext):
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
 
-        subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
+        print()
+        print()
+        warning('-----------------------------------')
+        warning('-----------------------------------')
+        print()
+        print()
 
+        print(f'Build folder : {self.build_temp}')
+
+        print('Try to open config.json file')
+        fn = 'config.json'
+        sconfig = {
+            'G4INSTALL': '',
+            'ITKDIR': ''
+        }
+        if 'G4INSTALL' in env:
+            sconfig['G4INSTALL'] = env['G4INSTALL']
+        if 'ITKDIR' in env:
+            sconfig['ITKDIR'] = env['ITKDIR']
+        try:
+            f = open(fn, 'r')
+            sconfig = json.load(f)
+        except IOError:
+            print('No config file, use default')
+        print('Config : ', sconfig)
+        print()
+
+        cmake_args += ['-DGeant4_DIR=' + sconfig['G4INSTALL']]
+        cmake_args += ['-DITK_DIR=' + sconfig['ITKDIR']]
+
+        print('CMAKE args', cmake_args)
+        print()
+
+        print('Starting cmake ...')
+        subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
+        print('cmake done')
         # subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
         subprocess.check_call(['cmake',
@@ -88,11 +132,13 @@ class CMakeBuild(build_ext):
                                ] + build_args,
                               cwd=self.build_temp)
 
+
 if platform.system() == "Darwin":
-  package_data = {'gam_g4': ['plugins/platforms/*.dylib'] + ['plugins/imageformats/*.dylib'] + ['plugins/miniconda/libQt5Svg.5.9.7.dylib']}
-  #package_data = {}
+    package_data = {'gam_g4': ['plugins/platforms/*.dylib'] + ['plugins/imageformats/*.dylib'] + [
+        'plugins/miniconda/libQt5Svg.5.9.7.dylib']}
+    # package_data = {}
 else:
-  package_data = {'gam_g4': ['plugins/*/*.so'] }
+    package_data = {'gam_g4': ['plugins/*/*.so']}
 
 setup(
 
@@ -113,5 +159,6 @@ setup(
     python_requires='>=3.5',
     install_requires=[
         'wget',
+        'colored'
     ],
 )
