@@ -89,7 +89,7 @@ jobs:
           which python
           python --version
           export PATH="/usr/local/miniconda/envs/gam_g4/bin/:$PATH"
-          pip install wheel delocate==0.8.2 wget
+          pip install wheel delocate==0.8.2 wget colored
           conda install -c anaconda qt
           mkdir -p $HOME/software
           if [ "${{ steps.cache_gam_g4_dependencies.outputs.cache-hit }}" != 'true' ]; then
