@@ -22,6 +22,12 @@
 /gam_g4/__pycache__
 /gam_g4/geant4_data/
 /gam_g4/*.so
+/gam_g4/g4_bindings/__pycache__
+/gam_g4/gam_lib/__pycache__
+/gam_g4/gam_lib/GamDoseActor_save_random_hit_cpp
+/gam_g4/gam_lib/termcolor.hpp
+/gam_g4.egg-info.save
+/gam_g4/geant4_data_save
 
 /.idea
 /.idea_save
@@ -29,15 +35,12 @@
 .DS_Store
 
 /build_test/
-/gam_g4/g4_bindings/__pycache__
-/gam_g4/gam_lib/__pycache__
-
-/gam_g4/geant4_data_save
 
 setup_test.py
 
-gam_g4/gam_lib/GamDoseActor_save_random_hit_cpp
-
-gam_g4/gam_lib/termcolor.hpp
-
-gam_g4.egg-info.save
+/config.json
+/config.linux.json
+/config.osx.json
+/make-linux.sh
+/make-osx.sh
+/gate-experimental-g4-v11
