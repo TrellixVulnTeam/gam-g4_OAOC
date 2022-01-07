@@ -6,17 +6,14 @@
    -------------------------------------------------- */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
-#include "GamInfo.h"
+#include "G4RootAnalysisManager.hh"
 
-void init_GamInfo(py::module &m) {
-    py::class_<GamInfo>(m, "GamInfo")
-        .def(py::init())
-        .def("get_G4MULTITHREADED", &GamInfo::get_G4MULTITHREADED)
-        .def("get_G4Version", &GamInfo::get_G4Version)
-        .def("get_G4Date", &GamInfo::get_G4Date)
-        .def("get_ITKVersion", &GamInfo::get_ITKVersion);
+void init_GamNTuple(py::module &m) {
+    py::class_<tools::wroot::ntuple>(m, "GamNTuple")
+        .def("entries", &tools::wroot::ntuple::entries);
 }
 

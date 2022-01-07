@@ -223,17 +223,22 @@ void init_GamTrackingAction(py::module &);
 
 void init_GamSimulationStatisticsActor(py::module &);
 
-void init_GamPhaseSpaceActor(py::module &);
+void init_GamPhaseSpaceActor2(py::module &);
 
 void init_GamHitsCollectionActor(py::module &);
 
-void init_GamTree(py::module &);
+void init_GamSinglesCollectionActor(py::module &);
 
-void init_GamBranch(py::module &);
+void init_GamHitAttributeManager(py::module &);
+
+void init_GamVHitAttribute(py::module &);
+
 
 void init_GamVSource(py::module &);
 
 void init_GamExceptionHandler(py::module &);
+
+void init_GamNTuple(py::module &);
 
 PYBIND11_MODULE(gam_g4, m) {
 
@@ -352,9 +357,11 @@ PYBIND11_MODULE(gam_g4, m) {
     init_GamEventAction(m);
     init_GamTrackingAction(m);
     init_GamSimulationStatisticsActor(m);
-    init_GamPhaseSpaceActor(m);
+    init_GamPhaseSpaceActor2(m);
     init_GamHitsCollectionActor(m);
-    init_GamTree(m);
-    init_GamBranch(m);
+    init_GamSinglesCollectionActor(m);
+    init_GamHitAttributeManager(m);
+    init_GamVHitAttribute(m);
     init_GamExceptionHandler(m);
+    init_GamNTuple(m);
 }

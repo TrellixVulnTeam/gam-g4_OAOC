@@ -35,6 +35,9 @@ public:
     // Called every time a Run ends (all threads)
     virtual void EndOfRunAction(const G4Run *run);
 
+    // Called every time the simulation is about to end (all threads)
+    virtual void EndOfSimulationWorkerAction(const G4Run *lastRun);
+
     // Called every time a Track starts (all threads)
     virtual void PreUserTrackingAction(const G4Track *track);
 
@@ -43,23 +46,27 @@ public:
 
     py::dict GetCounts() { return fCounts; }
 
-    void CreateCounts();
-
 protected:
-    int fRunCount;
-    int fEventCount;
-    long int fTrackCount;
-    long int fStepCount;
+
+    // Local data for the threads (each one has a copy)
+    struct threadLocal_t {
+        int fRunCount;
+        int fEventCount;
+        long int fTrackCount;
+        long int fStepCount;
+        std::map<std::string, long int> fTrackTypes;
+    };
+    G4Cache<threadLocal_t> threadLocalData;
+
+    // fCounts will contain the dictionary of all data,
+    // as a dict to be easy to read from python
+    py::dict fCounts;
+
+    bool fTrackTypesFlag;
     std::map<std::string, long int> fTrackTypes;
     double fDuration;
     std::chrono::system_clock::time_point fStartTime;
     std::chrono::system_clock::time_point fStopTime;
-    std::chrono::steady_clock::time_point fStartTimeDuration;
-    std::chrono::steady_clock::time_point fStopTimeDuration;
-    bool fTrackTypesFlag;
-
-    py::dict fCounts;
-
 };
 
 #endif // GamSimulationStatisticsActor_h

@@ -5,8 +5,8 @@
    See LICENSE.md for further details
    -------------------------------------------------- */
 
-#ifndef GamHitsCollectionActor_h
-#define GamHitsCollectionActor_h
+#ifndef GamSinglesCollectionActor_h
+#define GamSinglesCollectionActor_h
 
 #include <pybind11/stl.h>
 #include "GamVActor.h"
@@ -14,13 +14,30 @@
 
 namespace py = pybind11;
 
-class GamHitsCollectionActor : public GamVActor {
+/*
+ * Create a collection of singles:
+ *
+ * - every event, consider all hits in the attached volume (whatever the sub volumes)
+ * - sum all deposited energy
+ * - compute one single position, either the one the hit with the max energy (TakeEnergyWinner)
+ *   or the energy weighted position (TakeEnergyCentroid)
+ *
+ *  Warning: if the volume is composed of several sub volumes, this is ignored. All hits are
+ *  considered.
+ *
+ *  Warning: hits are gathered per Event, not per time.
+ *
+ */
+
+class GamHitsAdderActor : public GamVActor {
 
 public:
 
-    explicit GamHitsCollectionActor(py::dict &user_info);
+    enum AdderPolicy {Error, TakeEnergyWinner, TakeEnergyCentroid};
 
-    virtual ~GamHitsCollectionActor();
+    explicit GamHitsAdderActor(py::dict &user_info);
+
+    virtual ~GamHitsAdderActor();
 
     // Called when the simulation start (master thread only)
     virtual void StartSimulationAction();
@@ -40,18 +57,17 @@ public:
     // Called every time a Event endss (all threads)
     virtual void EndOfEventAction(const G4Event *event);
 
-    // Called every time a Track starts (all threads)
-    virtual void PreUserTrackingAction(const G4Track *track);
-
-    // Called every time a batch of step must be processed
-    virtual void SteppingAction(G4Step *, G4TouchableHistory *);
-
 protected:
     std::string fOutputFilename;
-    std::string fHitsCollectionName;
-    std::vector<std::string> fUserHitAttributeNames;
-    GamHitsCollection *fHits;
+    std::string fInputHitsCollectionName;
+    std::string fOutputHitsCollectionName;
+    GamHitsCollection * fOutputHitsCollection;
+    GamHitsCollection * fInputHitsCollection;
+    AdderPolicy fPolicy;
+
+    // During computation
+    size_t fIndex;
 
 };
 
-#endif // GamHitsCollectionActor_h
+#endif // GamSinglesCollectionActor_h

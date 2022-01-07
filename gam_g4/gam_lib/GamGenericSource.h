@@ -22,7 +22,7 @@ public:
 
     virtual ~GamGenericSource();
 
-    virtual void CleanInThread();
+    virtual void CleanWorkerThread();
 
     virtual void InitializeUserInfo(py::dict &user_info);
 
@@ -38,7 +38,7 @@ public:
 protected:
     int fMaxN;
     // We cannot not use a std::unique_ptr
-    // (or maybe by controlling the deletion during the CleanInThread ?)
+    // (or maybe by controlling the deletion during the CleanWorkerThread ?)
     GamSingleParticleSource *fSPS;
 
     double fActivity;
@@ -52,6 +52,7 @@ protected:
     int fZ; // Z: Atomic Number
     double fE; // E: Excitation energy
     double fWeight;
+    double fWeightSigma;
 
     // if confine is used, must be define after the initialization
     bool fInitConfine;

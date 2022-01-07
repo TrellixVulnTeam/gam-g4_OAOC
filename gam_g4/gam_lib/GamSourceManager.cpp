@@ -55,7 +55,7 @@ void GamSourceManager::AddSource(GamVSource *source) {
     fSources.push_back(source);
 }
 
-void GamSourceManager::StartMainThread() {
+void GamSourceManager::StartMasterThread() {
     // Create the main macro command
     // (only performed in the master thread)
     std::ostringstream oss;
@@ -77,7 +77,7 @@ void GamSourceManager::PrepareRunToStart(int run_id) {
     // set the current time
     fCurrentSimulationTime = fCurrentTimeInterval.first;
     // Prepare the run for all sources
-    for (auto source:fSources) {
+    for (auto source: fSources) {
         source->PrepareNextRun();
     }
     // Check next time
@@ -94,7 +94,7 @@ void GamSourceManager::PrepareNextSource() {
     double min_time = fCurrentTimeInterval.first;
     double max_time = fCurrentTimeInterval.second;
     // Ask all sources their next time, keep the closest one
-    for (auto source:fSources) {
+    for (auto source: fSources) {
         auto t = source->PrepareNextTime(fCurrentSimulationTime);
         if ((t >= min_time) && (t < max_time)) {
             max_time = t;
@@ -114,10 +114,11 @@ void GamSourceManager::CheckForNextRun() {
             // Sometimes, the source must clean some data in its own thread, not by the master thread
             // (for example with a G4SingleParticleSource object)
             // The CleanThread method is used for that.
-            for (auto source:fSources) {
-                source->CleanInThread();
+            for (auto source: fSources) {
+                source->CleanWorkerThread();
             }
-            // FIXME --> Maybe add here actor SimulationStopInThread
+            // FIXME --> Maybe add here actor SimulationStopInThread ?
+            // Nope because before EndOfRun
         }
     }
 }
@@ -130,7 +131,9 @@ void GamSourceManager::GeneratePrimaries(G4Event *event) {
     fCurrentSimulationTime = fNextSimulationTime;
 
     // Sometimes (rarely), there is no active source,
-    // so we create a fake geantino
+    // so we create a fake geantino.
+    // It may happen when the number of primary is fixed (with source.n = XX)
+    // and several runs are used.
     if (fNextActiveSource == NULL) {
         auto particle_table = G4ParticleTable::GetParticleTable();
         auto particle_def = particle_table->FindParticle("geantino");
@@ -192,7 +195,7 @@ void GamSourceManager::InitializeVisualization() {
     }
     // Apply all visu commands
     auto uim = G4UImanager::GetUIpointer();
-    for (const auto &x:fVisCommands) {
+    for (const auto &x: fVisCommands) {
         uim->ApplyCommand(x);
     }
     // Needed to remove verbose
@@ -205,3 +208,6 @@ void GamSourceManager::StartVisualization() const {
     delete fUIEx;
 }
 
+bool GamSourceManager::IsEndOfSimulationForWorker() const {
+    return (fNextRunId >= fSimulationTimes.size());
+}
