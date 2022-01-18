@@ -23,7 +23,7 @@ jobs:
         python-version: [3.6, 3.7, 3.8, 3.9]
 
     env:
-      GEANT4_VERSION: 'v10.7.0'
+      GEANT4_VERSION: 'v11.0.0'
       ITK_VERSION: 'v5.1.0'
 
     steps:
@@ -43,8 +43,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/software
-        key: ${{ runner.os }}-${{ steps.system-info.outputs.release }}_geant4_${{ env.GEANT4_VERSION }}_itk_${{ env.ITK_VERSION }}_tryConda5
-        restore-keys: ${{ runner.os }}-${{ steps.system-info.outputs.release }}_geant4_${{ env.GEANT4_VERSION }}_itk_${{ env.ITK_VERSION }}_tryConda5
+        key: ${{ runner.os }}-${{ steps.system-info.outputs.release }}_geant4_${{ env.GEANT4_VERSION }}_itk_${{ env.ITK_VERSION }}_build1
+        restore-keys: ${{ runner.os }}-${{ steps.system-info.outputs.release }}_geant4_${{ env.GEANT4_VERSION }}_itk_${{ env.ITK_VERSION }}_build1
     - name: Create Wheel Linux
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -60,7 +60,7 @@ jobs:
             export PYTHONFOLDER="cp39-cp39"
           fi
           mkdir -p $HOME/software
-          docker run --rm -e "PYTHONFOLDER=${PYTHONFOLDER}" -v $GITHUB_WORKSPACE:/home tbaudier/gam_g4:v10.7.0 /home/.github/workflows/createWheelLinux.sh
+          docker run --rm -e "PYTHONFOLDER=${PYTHONFOLDER}" -v $GITHUB_WORKSPACE:/home tbaudier/gam_g4:v11.0.0 /home/.github/workflows/createWheelLinux.sh
           ls wheelhouse
           sudo rm -rf dist
           mv wheelhouse dist
@@ -134,7 +134,7 @@ jobs:
           python3 .github/workflows/redoQt5LibsMac.py
           python3 setup.py sdist bdist_wheel
           ls dist
-          export DYLD_LIBRARY_PATH=$HOME/software/geant4/bin/BuildProducts/lib:/usr/local/miniconda/envs/gam_g4/plugins/platforms:$DYLD_LIBRARY_PATH:/usr/local/miniconda/envs/gam_g4/lib
+          export DYLD_LIBRARY_PATH=$HOME/software/geant4/bin/BuildProducts/lib:/usr/local/miniconda/envs/gam_g4/plugins/platforms:/opt/X11/lib/:$DYLD_LIBRARY_PATH:/usr/local/miniconda/envs/gam_g4/lib
           delocate-listdeps --all dist/*.whl
           delocate-wheel -w fixed_wheels -v dist/*.whl
           rm -rf dist
