@@ -141,6 +141,9 @@ jobs:
           ls fixed_wheels
           delocate-listdeps --all fixed_wheels/*.whl
           mv fixed_wheels dist
+          cd dist
+          find . -name '*whl' -exec bash -c ' mv $0 ${0/macosx_11_0/macosx_10_9}' {} \;
+          cd ..
     - name: Upload wheels
       uses: actions/upload-artifact@v1
       with:
