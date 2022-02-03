@@ -5,44 +5,29 @@
    See LICENSE.md for further details
    -------------------------------------------------- */
 
-#ifndef GamHitsAdderActor_h
-#define GamHitsAdderActor_h
+#ifndef GAM_G4_GAMHITSENERGYWINDOWSACTOR_H
+#define GAM_G4_GAMHITSENERGYWINDOWSACTOR_H
 
 #include <pybind11/stl.h>
 #include "G4Cache.hh"
 #include "GamVActor.h"
 #include "GamHitsCollection.h"
-#include "GamTHitAttribute.h"
 #include "GamHitsHelpers.h"
 
 namespace py = pybind11;
 
 /*
- * Create a collection of "singles":
- *
- * - when every event ends, we consider all hits in the attached volume (whatever the sub volumes)
- * - sum all deposited energy
- * - compute one single position, either the one the hit with the max energy (TakeEnergyWinner)
- *   or the energy weighted position (TakeEnergyCentroid)
- *
- *  Warning: if the volume is composed of several sub volumes, this is ignored. All hits are
- *  considered.
- *
- *  Warning: hits are gathered per Event, not per time.
- *
+ * Simple actor that use a input Hits Collection and split into several ones
+ * with some thresholds on the TotalEnergyDeposit
  */
 
-class GamHitsAdderActor : public GamVActor {
+class GamHitsEnergyWindowsActor : public GamVActor {
 
 public:
 
-    enum AdderPolicy {
-        Error, TakeEnergyWinner, TakeEnergyCentroid
-    };
+    explicit GamHitsEnergyWindowsActor(py::dict &user_info);
 
-    explicit GamHitsAdderActor(py::dict &user_info);
-
-    virtual ~GamHitsAdderActor();
+    virtual ~GamHitsEnergyWindowsActor();
 
     // Called when the simulation start (master thread only)
     virtual void StartSimulationAction();
@@ -58,31 +43,28 @@ public:
 
     void EndOfSimulationWorkerAction(const G4Run *);
 
-    // Called every time an Event ends (all threads)
+    // Called every time a Event endss (all threads)
     virtual void EndOfEventAction(const G4Event *event);
 
 protected:
     std::string fOutputFilename;
     std::string fInputHitsCollectionName;
-    std::string fOutputHitsCollectionName;
-    GamHitsCollection *fOutputHitsCollection;
     GamHitsCollection *fInputHitsCollection;
-    AdderPolicy fPolicy;
     std::vector<std::string> fUserSkipHitAttributeNames;
+    std::vector<GamHitsCollection *> fChannelHitsCollections;
+    std::vector<std::string> fChannelNames;
+    std::vector<double> fChannelMin;
+    std::vector<double> fChannelMax;
 
-    void InitializeComputation();
+    void ApplyThreshold(size_t i, double min, double max);
 
     // During computation
     struct threadLocalT {
+        std::vector<GamHitsAttributesFiller *> fFillers;
         std::vector<double> *fInputEdep;
-        std::vector<G4ThreeVector> *fInputPos;
-        GamHitsAttributesFiller *fHitsAttributeFiller;
-        GamVHitAttribute *fOutputEdepAttribute;
-        GamVHitAttribute *fOutputPosAttribute;
         size_t fIndex;
     };
     G4Cache<threadLocalT> fThreadLocalData;
-
 };
 
-#endif // GamHitsAdderActor_h
+#endif // GAM_G4_GAMHITSENERGYWINDOWSACTOR_H

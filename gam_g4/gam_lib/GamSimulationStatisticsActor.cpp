@@ -35,11 +35,16 @@ GamSimulationStatisticsActor::~GamSimulationStatisticsActor() = default;
 
 void GamSimulationStatisticsActor::StartSimulationAction() {
     // Called when the simulation start
+
+    // Time measurement WARNING
     // It may be better to start time measurement at begin of (first) run,
     // because there is some time between StartSimulation and BeginOfRun
-    // (it is only significant for short simulation).
-    // However, it is simpler here because it is only run by master thread
-    // (while BeginOfRunAction is executed by all threads)
+    // and because Gate used to do that.
+    // However, for MT application, it is simpler to start here
+    // because it is only run by master thread (while BeginOfRunAction is
+    // executed by all threads). But, it means the measurement includes
+    // the (relatively) high time needed to start all threads.
+
     fStartTime = std::chrono::system_clock::now();
 
     // initialise the counts
@@ -52,6 +57,8 @@ void GamSimulationStatisticsActor::StartSimulationAction() {
 void GamSimulationStatisticsActor::BeginOfRunAction(const G4Run *run) {
     // Called every time a run starts
     if (run->GetRunID() == 0) {
+        if (not G4Threading::IsMultithreadedApplication() or G4Threading::G4GetThreadId() == 0)
+            fStartRunTime = std::chrono::system_clock::now();
         // Initialise the thread local data
         threadLocal_t &data = threadLocalData.Get();
         data.fRunCount = 0;
@@ -105,9 +112,12 @@ void GamSimulationStatisticsActor::EndOfSimulationWorkerAction(const G4Run * /*l
 void GamSimulationStatisticsActor::EndSimulationAction() {
     // Called when the simulation end (only by the master thread)
     fStopTime = std::chrono::system_clock::now();
-    fDuration = std::chrono::duration_cast<std::chrono::microseconds>(fStopTime - fStartTime).count();
+    fDuration = std::chrono::duration_cast<std::chrono::microseconds>(fStopTime - fStartRunTime).count();
+    fInitDuration = std::chrono::duration_cast<std::chrono::microseconds>(fStartRunTime - fStartTime).count();
     fDuration = fDuration * CLHEP::microsecond;
+    fInitDuration = fInitDuration * CLHEP::microsecond;
     fCounts["duration"] = fDuration;
+    fCounts["init"] = fInitDuration;
     fCounts["track_types"] = fTrackTypes;
     {
         std::stringstream ss;

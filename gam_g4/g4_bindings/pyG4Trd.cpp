@@ -5,20 +5,14 @@
    See LICENSE.md for further details
    -------------------------------------------------- */
 
-#ifndef GamHit_h
-#define GamHit_h
+#include <pybind11/pybind11.h>
 
-#include <pybind11/stl.h>
-#include "G4VHit.hh"
-#include "GamHelpers.h"
+namespace py = pybind11;
 
+#include "G4Trd.hh"
 
-class GamHit : public G4VHit {
-public:
-    GamHit();
-
-    virtual ~GamHit();
-
-};
-
-#endif // GamHit_h
+void init_G4Trd(py::module &m) {
+    py::class_<G4Trd, G4VSolid>(m, "G4Trd")
+        .def(py::init<const G4String &, G4double, G4double,
+            G4double, G4double, G4double>());
+}

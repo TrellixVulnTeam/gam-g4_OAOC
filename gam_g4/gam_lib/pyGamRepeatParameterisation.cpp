@@ -6,14 +6,17 @@
    -------------------------------------------------- */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
-#include "G4Trap.hh"
+#include "GamRepeatParameterisation.h"
+#include "G4VPVParameterisation.hh"
 
-void init_G4Trap(py::module &m) {
-    py::class_<G4Trap, G4VSolid>(m, "G4Trap")
-        .def(py::init<const G4String &, G4double, G4double,
-            G4double, G4double, G4double, G4double,
-            G4double, G4double, G4double, G4double, G4double>());
+void init_GamRepeatParameterisation(py::module &m) {
+
+    py::class_<GamRepeatParameterisation, G4VPVParameterisation>(m, "GamRepeatParameterisation")
+        .def(py::init<>())
+        .def("SetUserInfo", &GamRepeatParameterisation::SetUserInfo);
 }
+

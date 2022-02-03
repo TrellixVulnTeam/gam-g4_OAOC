@@ -121,6 +121,8 @@ void init_G4Tubs(py::module &);
 
 void init_G4Cons(py::module &);
 
+void init_G4Trd(py::module &);
+
 void init_G4MultiUnion(py::module &);
 
 void init_G4SubtractionSolid(py::module &);
@@ -209,6 +211,8 @@ void init_itk_image(py::module &);
 
 void init_GamImageNestedParameterisation(py::module &);
 
+void init_GamRepeatParameterisation(py::module &);
+
 void init_GamSourceManager(py::module &);
 
 void init_GamGenericSource(py::module &);
@@ -228,6 +232,10 @@ void init_GamPhaseSpaceActor(py::module &);
 void init_GamHitsCollectionActor(py::module &);
 
 void init_GamHitsAdderActor(py::module &);
+
+void init_GamHitsEnergyWindowsActor(py::module &m);
+
+void init_GamHitsProjectionActor(py::module &m);
 
 void init_GamHitAttributeManager(py::module &);
 
@@ -299,6 +307,7 @@ PYBIND11_MODULE(gam_g4, m) {
     init_G4Trap(m);
     init_G4Tubs(m);
     init_G4Cons(m);
+    init_G4Trd(m);
     init_G4MultiUnion(m);
     init_G4SubtractionSolid(m);
     init_G4UnionSolid(m);
@@ -347,6 +356,7 @@ PYBIND11_MODULE(gam_g4, m) {
     init_itk_image(m);
     init_GamDoseActor(m);
     init_GamImageNestedParameterisation(m);
+    init_GamRepeatParameterisation(m);
     init_GamVSource(m);
     init_GamSourceManager(m);
     init_GamGenericSource(m);
@@ -360,6 +370,8 @@ PYBIND11_MODULE(gam_g4, m) {
     init_GamPhaseSpaceActor(m);
     init_GamHitsCollectionActor(m);
     init_GamHitsAdderActor(m);
+    init_GamHitsEnergyWindowsActor(m);
+    init_GamHitsProjectionActor(m);
     init_GamHitAttributeManager(m);
     init_GamVHitAttribute(m);
     init_GamExceptionHandler(m);

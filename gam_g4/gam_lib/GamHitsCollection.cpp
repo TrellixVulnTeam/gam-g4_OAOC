@@ -5,27 +5,33 @@
    See LICENSE.md for further details
    -------------------------------------------------- */
 
+#include "G4Step.hh"
 #include "GamHitsCollection.h"
 #include "GamHitAttributeManager.h"
 #include "GamHitsCollectionsRootManager.h"
-
-G4Mutex GamHitsCollectionMutex = G4MUTEX_INITIALIZER;
 
 
 GamHitsCollection::GamHitsCollection(std::string collName) :
     G4VHitsCollection("", collName), fHitsCollectionName(collName) {
     fTupleId = -1;
     fHitsCollectionTitle = "Hits collection";
-    fFilename = "hits.root";
+    fFilename = "";
     fCurrentHitAttributeId = 0;
+    fWriteToRootFlag = true;
 }
 
 GamHitsCollection::~GamHitsCollection() {
 }
 
 
+void GamHitsCollection::SetWriteToRootFlag(bool f) {
+    fWriteToRootFlag = f;
+}
+
 void GamHitsCollection::SetFilename(std::string filename) {
     fFilename = filename;
+    if (fFilename == "") SetWriteToRootFlag(false);
+    else SetWriteToRootFlag(true);
 }
 
 void GamHitsCollection::InitializeHitAttributes(const std::vector<std::string> &names) {
@@ -35,25 +41,39 @@ void GamHitsCollection::InitializeHitAttributes(const std::vector<std::string> &
     FinishInitialization();
 }
 
+void GamHitsCollection::InitializeHitAttributes(const std::set<std::string> &names) {
+    StartInitialization();
+    for (auto &name: names)
+        InitializeHitAttribute(name);
+    FinishInitialization();
+}
+
 void GamHitsCollection::StartInitialization() {
+    if (!fWriteToRootFlag) return;
     auto am = GamHitsCollectionsRootManager::GetInstance();
     auto id = am->DeclareNewTuple(fHitsCollectionName);
     fTupleId = id;
 }
 
-void GamHitsCollection::CreateRootTupleForMaster() {
+void GamHitsCollection::InitializeRootTupleForMaster() {
+    if (!fWriteToRootFlag) return;
     auto am = GamHitsCollectionsRootManager::GetInstance();
     am->CreateRootTuple(this);
 }
 
-void GamHitsCollection::CreateRootTupleForWorker() {
+void GamHitsCollection::InitializeRootTupleForWorker() {
+    if (!fWriteToRootFlag) return;
     // no need if not multi-thread
     if (not G4Threading::IsMultithreadedApplication()) return;
     auto am = GamHitsCollectionsRootManager::GetInstance();
     am->CreateRootTuple(this);
 }
 
-void GamHitsCollection::FillToRoot() const {
+void GamHitsCollection::FillToRoot(bool clear) {
+    if (!fWriteToRootFlag) {
+        if (clear) Clear();
+        return;
+    }
     /*
      * maybe not very efficient to loop that way (row then column)
      * but I don't manage to do elsewhere
@@ -65,6 +85,7 @@ void GamHitsCollection::FillToRoot() const {
         }
         am->AddNtupleRow(fTupleId);
     }
+    if (clear) Clear();
 }
 
 void GamHitsCollection::Clear() {
@@ -74,11 +95,13 @@ void GamHitsCollection::Clear() {
 }
 
 void GamHitsCollection::Write() {
+    if (!fWriteToRootFlag) return;
     auto am = GamHitsCollectionsRootManager::GetInstance();
     am->Write(fTupleId);
 }
 
 void GamHitsCollection::Close() {
+    if (!fWriteToRootFlag) return;
     auto am = GamHitsCollectionsRootManager::GetInstance();
     am->CloseFile(fTupleId);
 }
@@ -116,10 +139,25 @@ size_t GamHitsCollection::GetSize() const {
 }
 
 GamVHitAttribute *GamHitsCollection::GetHitAttribute(const std::string &name) {
-    if (fHitAttributeMap.count(name) == 0) {
+    // Sometimes it is faster to apologize instead of asking permission ...
+    try {
+        return fHitAttributeMap.at(name);
+    } catch (std::out_of_range &) {
         std::ostringstream oss;
         oss << "Error the branch named '" << name << "' does not exist. Abort";
         Fatal(oss.str());
     }
-    return fHitAttributeMap[name];
+    return nullptr; // fake to avoid warning
+}
+
+bool GamHitsCollection::IsHitAttributeExists(const std::string &name) const {
+    return (fHitAttributeMap.count(name) != 0);
+}
+
+
+std::set<std::string> GamHitsCollection::GetHitAttributeNames() const {
+    std::set<std::string> list;
+    for (auto att: fHitAttributes)
+        list.insert(att->GetHitAttributeName());
+    return list;
 }

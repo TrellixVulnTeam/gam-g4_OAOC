@@ -12,7 +12,7 @@
 #include "GamHitsCollectionManager.h"
 
 GamHitsCollectionActor::GamHitsCollectionActor(py::dict &user_info)
-    : GamVActor(user_info) {
+        : GamVActor(user_info) {
     fActions.insert("StartSimulationAction");
     fActions.insert("BeginOfRunAction");
     fActions.insert("SteppingAction");
@@ -31,34 +31,23 @@ GamHitsCollectionActor::~GamHitsCollectionActor() {
 // Called when the simulation start
 void GamHitsCollectionActor::StartSimulationAction() {
     fHits = GamHitsCollectionManager::GetInstance()->NewHitsCollection(fHitsCollectionName);
+    // This order is important: filename and attributes must be set before Root initialization
     fHits->SetFilename(fOutputFilename);
     fHits->InitializeHitAttributes(fUserHitAttributeNames);
-    // Needed to create the root output
-    fHits->CreateRootTupleForMaster();
+    fHits->InitializeRootTupleForMaster();
 }
 
 // Called every time a Run starts
 void GamHitsCollectionActor::BeginOfRunAction(const G4Run *run) {
     // Needed to create the root output (only the first run)
     if (run->GetRunID() == 0)
-        fHits->CreateRootTupleForWorker();
+        fHits->InitializeRootTupleForWorker();
 }
 
-void GamHitsCollectionActor::BeginOfEventAction(const G4Event *) {
-    //DDD("GamHitsCollectionActor::BeginOfEventAction");
-}
-
-// Called every time a Track starts
-void GamHitsCollectionActor::PreUserTrackingAction(const G4Track *) {
-}
 
 // Called every time a batch of step must be processed
 void GamHitsCollectionActor::SteppingAction(G4Step *step, G4TouchableHistory *touchable) {
     fHits->ProcessHits(step, touchable);
-}
-
-void GamHitsCollectionActor::EndOfEventAction(const G4Event *) {
-    // nothing
 }
 
 // Called every time a Run ends
@@ -70,17 +59,16 @@ void GamHitsCollectionActor::EndOfRunAction(const G4Run *) {
      */
     // Copy value to root (need to clear !)
     fHits->FillToRoot();
-    fHits->Clear();
 }
 
 void GamHitsCollectionActor::EndOfSimulationWorkerAction(const G4Run * /*lastRun*/) {
     // Write only once per worker thread
-    fHits->Write(); // FIXME add an option to not write to disk
+    fHits->Write();
 }
 
 // Called when the simulation end
 void GamHitsCollectionActor::EndSimulationAction() {
-    fHits->Write(); // FIXME add an option to not write to disk
+    fHits->Write();
     fHits->Close();
 }
 
