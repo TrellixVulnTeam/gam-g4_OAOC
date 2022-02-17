@@ -5,13 +5,4 @@
    See LICENSE.md for further details
    -------------------------------------------------- */
 
-#include "GamHelpers.h"
-#include <G4Threading.hh>
-
-const int LogLevel_RUN = 20;
-const int LogLevel_EVENT = 50;
-
-void Fatal(std::string s) {
-    std::cout << "ERROR in GAM_G4 " << s << std::endl;
-    exit(0);
-}
+#include "GamHelpersImage.h"

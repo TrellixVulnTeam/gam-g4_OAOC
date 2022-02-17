@@ -9,7 +9,7 @@
 #include "G4RandomTools.hh"
 #include "G4IonTable.hh"
 #include "GamGenericSource.h"
-#include "GamDictHelpers.h"
+#include "GamHelpersDict.h"
 
 GamGenericSource::GamGenericSource() : GamVSource() {
     fN = 0;
@@ -37,7 +37,7 @@ void GamGenericSource::CleanWorkerThread() {
 
 void GamGenericSource::InitializeUserInfo(py::dict &user_info) {
     GamVSource::InitializeUserInfo(user_info);
-    fSPS = new GamSingleParticleSource();
+    fSPS = new GamSingleParticleSource(fMother);
 
     // get the user info for the particle
     InitializeParticle(user_info);
@@ -63,6 +63,7 @@ void GamGenericSource::InitializeUserInfo(py::dict &user_info) {
 
     // init number of events
     fN = 0;
+    fAASkippedParticles = 0;
 }
 
 void GamGenericSource::UpdateActivity(double time) {
@@ -79,20 +80,32 @@ double GamGenericSource::PrepareNextTime(double current_simulation_time) {
             return fStartTime;
         }
         if (current_simulation_time >= fEndTime) {
+            fAASkippedParticles = fSPS->GetAASkippedParticles();
             return -1;
         }
         double next_time = current_simulation_time - log(G4UniformRand()) * (1.0 / fActivity);
+        if (next_time >= fEndTime) {
+            fAASkippedParticles = fSPS->GetAASkippedParticles();
+        }
         return next_time;
     }
     // check according to t MaxN
-    if (fN >= fMaxN) return -1;
+    if (fN >= fMaxN) {
+        fAASkippedParticles = fSPS->GetAASkippedParticles();
+        return -1;
+    }
     return fStartTime;
 }
 
 void GamGenericSource::PrepareNextRun() {
+    // The following compute the global transformation from
+    // the local volume (mother) to the world
     GamVSource::PrepareNextRun();
+    // This global transformation is given to the SPS that will
+    // generate particles in the correct coordinate system
     auto pos = fSPS->GetPosDist();
     pos->SetCentreCoords(fGlobalTranslation);
+
     // orientation according to mother volume
     auto rotation = fGlobalRotation;
     G4ThreeVector r1(rotation(0, 0),
@@ -193,14 +206,14 @@ void GamGenericSource::InitializePosition(py::dict puser_info) {
     auto pos_type = DictStr(user_info, "type");
     std::vector<std::string> l = {"sphere", "point", "box", "disc"};
     CheckIsIn(pos_type, l);
-    auto translation = DictVec(user_info, "translation");
+    auto translation = Dict3DVector(user_info, "translation");
     if (pos_type == "point") {
         pos->SetPosDisType("Point");
     }
     if (pos_type == "box") {
         pos->SetPosDisType("Volume");
         pos->SetPosDisShape("Para");
-        auto size = DictVec(user_info, "size") / 2.0;
+        auto size = Dict3DVector(user_info, "size") / 2.0;
         pos->SetHalfX(size[0]);
         pos->SetHalfY(size[1]);
         pos->SetHalfZ(size[2]);
@@ -255,14 +268,18 @@ void GamGenericSource::InitializeDirection(py::dict puser_info) {
     }
     if (ang_type == "momentum") {
         ang->SetAngDistType("planar"); // FIXME really ??
-        auto d = DictVec(user_info, "momentum");
+        auto d = Dict3DVector(user_info, "momentum");
         ang->SetParticleMomentumDirection(d);
     }
     if (ang_type == "focused") {
         ang->SetAngDistType("focused");
-        auto f = DictVec(user_info, "focus_point");
+        auto f = Dict3DVector(user_info, "focus_point");
         ang->SetFocusPoint(f);
     }
+
+    // set the angle acceptance volume if needed
+    auto v = DictStr(user_info, "angle_acceptance_volume");
+    if (v != "None") fSPS->SetAngleAcceptanceVolume(v);
 }
 
 void GamGenericSource::InitializeEnergy(py::dict puser_info) {

@@ -12,7 +12,7 @@
 #include "G4Cache.hh"
 #include "GamVActor.h"
 #include "GamHitsCollection.h"
-#include "GamHitsHelpers.h"
+#include "GamHelpersHits.h"
 #include "itkImage.h"
 
 namespace py = pybind11;
@@ -41,13 +41,17 @@ public:
     // Image type is 3D float by default
     typedef itk::Image<float, 3> ImageType;
     ImageType::Pointer fImage;
+    std::string fPhysicalVolumeName;
 
 protected:
     std::string fOutputFilename;
     std::vector<std::string> fInputHitsCollectionNames;
     std::vector<GamHitsCollection *> fInputHitsCollections;
 
-    void ProcessSlice(size_t slice);
+    void ProcessSlice(size_t slice, size_t channel);
+
+    G4ThreeVector fPreviousTranslation;
+    G4RotationMatrix fPreviousRotation;
 
     // During computation
     struct threadLocalT {
